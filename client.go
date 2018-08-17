@@ -25,8 +25,13 @@ type fastHttpClient struct {
 	uri     *fasthttp.URI
 }
 
+func (fhc *fastHttpClient) Address(address string) rehttp.Builder {
+	fhc.uri.Parse(nil, []byte(address))
+	return fhc
+}
+
 func (fhc *fastHttpClient) PUT(url string) rehttp.Builder {
-	fhc.uri.Parse(nil, []byte(url))
+	fhc.uri.SetPath(url)
 	fhc.req.Header.SetMethod("PUT")
 	return fhc
 }
@@ -52,30 +57,30 @@ func (fhc *fastHttpClient) Decoder(decoder serialization.Decoder) rehttp.Builder
 }
 
 func (fhc *fastHttpClient) GET(u string) rehttp.Builder {
-	fhc.uri.Parse(nil, []byte(u))
+	fhc.uri.SetPath(u)
 	return fhc
 }
 
 func (fhc *fastHttpClient) POST(u string) rehttp.Builder {
-	fhc.uri.Parse(nil, []byte(u))
+	fhc.uri.SetPath(u)
 	fhc.req.Header.SetMethod("POST")
 	return fhc
 }
 
 func (fhc *fastHttpClient) DELETE(u string) rehttp.Builder {
-	fhc.uri.Parse(nil, []byte(u))
+	fhc.uri.SetPath(u)
 	fhc.req.Header.SetMethod("DELETE")
 	return fhc
 }
 
 func (fhc *fastHttpClient) PATCH(u string) rehttp.Builder {
-	fhc.uri.Parse(nil, []byte(u))
+	fhc.uri.SetPath(u)
 	fhc.req.Header.SetMethod("PATCH")
 	return fhc
 }
 
 func (fhc *fastHttpClient) OPTIONS(u string) rehttp.Builder {
-	fhc.uri.Parse(nil, []byte(u))
+	fhc.uri.SetPath(u)
 	fhc.req.Header.SetMethod("OPTIONS")
 	return fhc
 }

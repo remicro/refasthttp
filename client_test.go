@@ -17,6 +17,7 @@ func TestNew(t *testing.T) {
 	})
 	defer fx.Finish()
 	res, err := New().
+		Address(fx.Address()).
 		GET(fx.Address()).
 		Go()
 	require.NoError(t, err)
@@ -43,7 +44,11 @@ func TestFastHttpClient_GET(t *testing.T) {
 		})
 		defer fx.Finish()
 		var result Object
-		res, err := New().GET(fx.Address()).Decoder(reFastHttpFixture.Decoder()).ToDecode(&result).Go()
+		res, err := New().
+			Address(fx.Address()).
+			GET("/").
+			Decoder(reFastHttpFixture.Decoder()).
+			ToDecode(&result).Go()
 		require.NoError(t, err)
 		assert.Equal(t, rehttp.ContentTypeJson, res.ContentType())
 		assert.Equal(t, 200, res.Status())
@@ -75,7 +80,8 @@ func TestFastHttpClient_POST(t *testing.T) {
 
 		var result Object
 		res, err := New().
-			POST(fx.Address()).
+			Address(fx.Address()).
+			POST("/").
 			Encoder(reFastHttpFixture.Encoder()).
 			Decoder(reFastHttpFixture.Decoder()).
 			ToEncode(&req).
@@ -97,12 +103,15 @@ func TestFastHttpClient_PUT(t *testing.T) {
 		req := Object{
 			Label: trifle.String(),
 		}
+		var address string
 		fx := reFastHttpFixture.New(t, func(ctx *fasthttp.RequestCtx) {
 			assert.Equal(t, "PUT", string(ctx.Method()))
 			var rr Object
 
 			require.NoError(t, reFastHttpFixture.Decoder().Decode(&rr, ctx.PostBody()))
 			assert.Equal(t, req, rr)
+			assert.Equal(t, "/path", string(ctx.Request.URI().Path()))
+			assert.Equal(t, address+"/path", string(ctx.Request.URI().FullURI()))
 
 			data, err := reFastHttpFixture.Encoder().Encode(&exp)
 			require.NoError(t, err)
@@ -111,9 +120,12 @@ func TestFastHttpClient_PUT(t *testing.T) {
 		})
 		defer fx.Finish()
 
+		address = fx.Address()
+
 		var result Object
 		res, err := New().
-			PUT(fx.Address()).
+			Address(fx.Address()).
+			PUT("/path").
 			Encoder(reFastHttpFixture.Encoder()).
 			Decoder(reFastHttpFixture.Decoder()).
 			ToEncode(&req).
@@ -141,7 +153,13 @@ func TestFastHttpClient_DELETE(t *testing.T) {
 		})
 		defer fx.Finish()
 		var result Object
-		res, err := New().DELETE(fx.Address()).Decoder(reFastHttpFixture.Decoder()).ToDecode(&result).Go()
+		res, err := New().
+			Address(fx.Address()).
+			DELETE(fx.Address()).
+			Decoder(reFastHttpFixture.Decoder()).
+			ToDecode(&result).
+			Go()
+
 		require.NoError(t, err)
 		assert.Equal(t, rehttp.ContentTypeJson, res.ContentType())
 		assert.Equal(t, 200, res.Status())
@@ -163,7 +181,13 @@ func TestFastHttpClient_OPTIONS(t *testing.T) {
 		})
 		defer fx.Finish()
 		var result Object
-		res, err := New().OPTIONS(fx.Address()).Decoder(reFastHttpFixture.Decoder()).ToDecode(&result).Go()
+		res, err := New().
+			Address(fx.Address()).
+			OPTIONS(fx.Address()).
+			Decoder(reFastHttpFixture.Decoder()).
+			ToDecode(&result).
+			Go()
+
 		require.NoError(t, err)
 		assert.Equal(t, rehttp.ContentTypeJson, res.ContentType())
 		assert.Equal(t, 200, res.Status())
@@ -185,7 +209,12 @@ func TestFastHttpClient_PATCH(t *testing.T) {
 		})
 		defer fx.Finish()
 		var result Object
-		res, err := New().PATCH(fx.Address()).Decoder(reFastHttpFixture.Decoder()).ToDecode(&result).Go()
+		res, err := New().
+			Address(fx.Address()).
+			PATCH(fx.Address()).
+			Decoder(reFastHttpFixture.Decoder()).
+			ToDecode(&result).
+			Go()
 		require.NoError(t, err)
 		assert.Equal(t, rehttp.ContentTypeJson, res.ContentType())
 		assert.Equal(t, 200, res.Status())
@@ -210,6 +239,7 @@ func TestFastHttpClient_ContentType(t *testing.T) {
 		defer fx.Finish()
 		var result Object
 		res, err := New().
+			Address(fx.Address()).
 			GET(fx.Address()).
 			ContentType(rehttp.ContentTypeJson).
 			Decoder(reFastHttpFixture.Decoder()).
@@ -243,6 +273,7 @@ func TestFastHttpClient_Header(t *testing.T) {
 
 		var result Object
 		res, err := New().
+			Address(fx.Address()).
 			GET(fx.Address()).
 			ContentType(rehttp.ContentTypeJson).Header(headerKey, headerValue).
 			Decoder(reFastHttpFixture.Decoder()).
@@ -275,6 +306,7 @@ func TestFastHttpClient_Cookie(t *testing.T) {
 
 		var result Object
 		res, err := New().
+			Address(fx.Address()).
 			GET(fx.Address()).
 			ContentType(rehttp.ContentTypeJson).
 			Cookie(cookieKey, []byte(cookieValue)).
@@ -309,6 +341,7 @@ func TestFastHttpClient_QueryParam(t *testing.T) {
 		var result Object
 
 		res, err := New().
+			Address(fx.Address()).
 			GET(fx.Address()).QueryParam(queryKey, queryValue).
 			ToDecode(&result).
 			Decoder(reFastHttpFixture.Decoder()).
@@ -329,6 +362,7 @@ func TestFastHttpClient_Go(t *testing.T) {
 		exp := trifle.UnexpectedError()
 
 		res, err := New().
+			Address(trifle.String()).
 			GET(trifle.String()).
 			ToEncode(&obj).
 			Encoder(reFastHttpFixture.FailEncoder(exp)).
@@ -358,6 +392,7 @@ func TestFastHttpClient_Go(t *testing.T) {
 		var result Object
 
 		res, err := New().
+			Address(fx.Address()).
 			GET(fx.Address()).QueryParam(queryKey, queryValue).
 			ToDecode(&result).
 			Decoder(reFastHttpFixture.FailDecoder(expErr)).
@@ -370,6 +405,7 @@ func TestFastHttpClient_Go(t *testing.T) {
 	})
 	t.Run("expect error on do request", func(t *testing.T) {
 		res, err := New().
+			Address(trifle.String()).
 			GET(trifle.String()).
 			Go()
 		require.Error(t, err)
@@ -399,7 +435,9 @@ func TestFastHttpClient_Before(t *testing.T) {
 		var result Object
 
 		res, err := New().
-			GET(fx.Address()).QueryParam(queryKey, queryValue).
+			Address(fx.Address()).
+			GET("/").
+			QueryParam(queryKey, queryValue).
 			ToDecode(&result).
 			Decoder(reFastHttpFixture.FailDecoder(expErr)).
 			Before(func(b rehttp.Builder, url string, body []byte) {
