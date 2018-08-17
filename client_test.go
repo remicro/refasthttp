@@ -376,3 +376,40 @@ func TestFastHttpClient_Go(t *testing.T) {
 		require.Nil(t, res)
 	})
 }
+
+func TestFastHttpClient_Before(t *testing.T) {
+	t.Run("expect error on object decoding", func(t *testing.T) {
+		exp := Object{
+			Label: trifle.String(),
+		}
+		expErr := trifle.UnexpectedError()
+
+		queryKey, queryValue := trifle.String(), trifle.String()
+		fx := reFastHttpFixture.New(t, func(ctx *fasthttp.RequestCtx) {
+			assert.Equal(t, "GET", string(ctx.Method()))
+			assert.Equal(t, queryValue, string(ctx.QueryArgs().Peek(queryKey)))
+
+			data, err := reFastHttpFixture.Encoder().Encode(&exp)
+			require.NoError(t, err)
+			ctx.Response.Header.SetContentType("application/json")
+			ctx.Write(data)
+		})
+		defer fx.Finish()
+
+		var result Object
+
+		res, err := New().
+			GET(fx.Address()).QueryParam(queryKey, queryValue).
+			ToDecode(&result).
+			Decoder(reFastHttpFixture.FailDecoder(expErr)).
+			Before(func(b rehttp.Builder, url string, body []byte) {
+				assert.Equal(t, fx.Address()+"/?"+queryKey+"="+queryValue, url)
+			}).
+			Go()
+
+		require.Error(t, expErr, err)
+		require.NotNil(t, res, err)
+		require.NoError(t, reFastHttpFixture.Decoder().Decode(&result, res.Body()))
+		assert.Equal(t, exp, result)
+	})
+}

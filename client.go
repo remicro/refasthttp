@@ -17,6 +17,7 @@ type fastHttpClient struct {
 	url     string
 	method  int
 	req     *fasthttp.Request
+	before  rehttp.Before
 	decoder serialization.Decoder
 	encoder serialization.Encoder
 	encObj  interface{}
@@ -98,6 +99,10 @@ func (fhc *fastHttpClient) Cookie(key string, value []byte) rehttp.Builder {
 	fhc.req.Header.SetCookieBytesKV([]byte(key), value)
 	return fhc
 }
+func (fhc *fastHttpClient) Before(before rehttp.Before) rehttp.Builder {
+	fhc.before = before
+	return fhc
+}
 
 func (fhc *fastHttpClient) Go() (response rehttp.Response, err error) {
 	resp := fasthttp.AcquireResponse()
@@ -111,6 +116,9 @@ func (fhc *fastHttpClient) Go() (response rehttp.Response, err error) {
 		fhc.req.SetBody(data)
 	}
 	fhc.req.SetRequestURIBytes(fhc.uri.FullURI())
+	if fhc.before != nil {
+		fhc.before(fhc, string(fhc.uri.FullURI()), fhc.req.Body())
+	}
 	err = client.Do(fhc.req, resp)
 	if err != nil {
 		return
