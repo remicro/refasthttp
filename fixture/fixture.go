@@ -7,22 +7,22 @@ import (
 	"testing"
 )
 
-type fixture struct {
+type Fixture struct {
 	l net.Listener
 	*fasthttp.Server
 	t *testing.T
 }
 
-func (fx *fixture) Finish() {
+func (fx *Fixture) Finish() {
 	require.NoError(fx.t, fx.l.Close())
 }
 
-func (fx *fixture) Address() string {
+func (fx *Fixture) Address() string {
 	return "http://" + fx.l.Addr().String()
 }
 
-func New(t *testing.T, handler fasthttp.RequestHandler) *fixture {
-	fx := &fixture{
+func New(t *testing.T, handler fasthttp.RequestHandler) *Fixture {
+	fx := &Fixture{
 		Server: &fasthttp.Server{},
 		t:      t,
 	}
