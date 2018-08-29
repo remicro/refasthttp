@@ -48,7 +48,9 @@ func TestFastHttpClient_GET(t *testing.T) {
 			Address(fx.Address()).
 			GET("/").
 			Decoder(reFastHttpFixture.Decoder()).
-			ToDecode(&result).Go()
+			ToDecode(&result).
+			DecodeType(rehttp.ContentTypeJson).
+			Go()
 		require.NoError(t, err)
 		assert.Equal(t, rehttp.ContentTypeJson, res.ContentType())
 		assert.Equal(t, 200, res.Status())
@@ -86,6 +88,7 @@ func TestFastHttpClient_POST(t *testing.T) {
 			Decoder(reFastHttpFixture.Decoder()).
 			ToEncode(&req).
 			ToDecode(&result).
+			DecodeType(rehttp.ContentTypeJson).
 			Go()
 
 		require.NoError(t, err)
@@ -130,6 +133,7 @@ func TestFastHttpClient_PUT(t *testing.T) {
 			Decoder(reFastHttpFixture.Decoder()).
 			ToEncode(&req).
 			ToDecode(&result).
+			DecodeType(rehttp.ContentTypeJson).
 			Go()
 
 		require.NoError(t, err)
@@ -158,6 +162,7 @@ func TestFastHttpClient_DELETE(t *testing.T) {
 			DELETE(fx.Address()).
 			Decoder(reFastHttpFixture.Decoder()).
 			ToDecode(&result).
+			DecodeType(rehttp.ContentTypeJson).
 			Go()
 
 		require.NoError(t, err)
@@ -186,6 +191,7 @@ func TestFastHttpClient_OPTIONS(t *testing.T) {
 			OPTIONS(fx.Address()).
 			Decoder(reFastHttpFixture.Decoder()).
 			ToDecode(&result).
+			DecodeType(rehttp.ContentTypeJson).
 			Go()
 
 		require.NoError(t, err)
@@ -214,6 +220,7 @@ func TestFastHttpClient_PATCH(t *testing.T) {
 			PATCH(fx.Address()).
 			Decoder(reFastHttpFixture.Decoder()).
 			ToDecode(&result).
+			DecodeType(rehttp.ContentTypeJson).
 			Go()
 		require.NoError(t, err)
 		assert.Equal(t, rehttp.ContentTypeJson, res.ContentType())
@@ -244,6 +251,7 @@ func TestFastHttpClient_ContentType(t *testing.T) {
 			ContentType(rehttp.ContentTypeJson).
 			Decoder(reFastHttpFixture.Decoder()).
 			ToDecode(&result).
+			DecodeType(rehttp.ContentTypeJson).
 			Go()
 
 		require.NoError(t, err)
@@ -278,6 +286,7 @@ func TestFastHttpClient_Header(t *testing.T) {
 			ContentType(rehttp.ContentTypeJson).Header(headerKey, headerValue).
 			Decoder(reFastHttpFixture.Decoder()).
 			ToDecode(&result).
+			DecodeType(rehttp.ContentTypeJson).
 			Go()
 
 		require.NoError(t, err)
@@ -312,6 +321,7 @@ func TestFastHttpClient_Cookie(t *testing.T) {
 			Cookie(cookieKey, []byte(cookieValue)).
 			Decoder(reFastHttpFixture.Decoder()).
 			ToDecode(&result).
+			DecodeType(rehttp.ContentTypeJson).
 			Go()
 
 		require.NoError(t, err)
@@ -345,6 +355,7 @@ func TestFastHttpClient_QueryParam(t *testing.T) {
 			GET(fx.Address()).QueryParam(queryKey, queryValue).
 			ToDecode(&result).
 			Decoder(reFastHttpFixture.Decoder()).
+			DecodeType(rehttp.ContentTypeJson).
 			Go()
 
 		require.NoError(t, err)

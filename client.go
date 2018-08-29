@@ -1,6 +1,7 @@
 package refasthttp
 
 import (
+	"github.com/remicro/api/logging"
 	"github.com/remicro/api/net/rehttp"
 	"github.com/remicro/api/serialization"
 	"github.com/valyala/fasthttp"
@@ -8,21 +9,34 @@ import (
 
 func New() rehttp.Builder {
 	return &fastHttpClient{
-		req: fasthttp.AcquireRequest(),
-		uri: fasthttp.AcquireURI(),
+		req:    fasthttp.AcquireRequest(),
+		uri:    fasthttp.AcquireURI(),
+		logger: dummyLogger{},
 	}
 }
 
 type fastHttpClient struct {
-	url     string
-	method  int
-	req     *fasthttp.Request
-	before  rehttp.Before
-	decoder serialization.Decoder
-	encoder serialization.Encoder
-	encObj  interface{}
-	decObj  interface{}
-	uri     *fasthttp.URI
+	url        string
+	method     int
+	decodeType rehttp.ContentType
+	logger     logging.Logger
+	req        *fasthttp.Request
+	before     rehttp.Before
+	decoder    serialization.Decoder
+	encoder    serialization.Encoder
+	encObj     interface{}
+	decObj     interface{}
+	uri        *fasthttp.URI
+}
+
+func (fhc *fastHttpClient) Logger(logger logging.Logger) rehttp.Builder {
+	fhc.logger = logger
+	return fhc
+}
+
+func (fhc *fastHttpClient) DecodeType(contentType rehttp.ContentType) rehttp.Builder {
+	fhc.decodeType = contentType
+	return fhc
 }
 
 func (fhc *fastHttpClient) Address(address string) rehttp.Builder {
@@ -116,10 +130,16 @@ func (fhc *fastHttpClient) Go() (response rehttp.Response, err error) {
 		var data []byte
 		data, err = fhc.encoder.Encode(fhc.encObj)
 		if err != nil {
+			fhc.logger.Debug().Log("can't encode object for request")
 			return
 		}
 		fhc.req.SetBody(data)
 	}
+
+	if fhc.decodeType != "" {
+		fhc.req.Header.Add("Accept", fhc.decodeType.String())
+	}
+
 	fhc.req.SetRequestURIBytes(fhc.uri.FullURI())
 	if fhc.before != nil {
 		fhc.before(fhc, string(fhc.uri.FullURI()), fhc.req.Body())
@@ -132,8 +152,14 @@ func (fhc *fastHttpClient) Go() (response rehttp.Response, err error) {
 		response: resp,
 	}
 
-	if fhc.decObj != nil && fhc.decoder != nil {
+	if fhc.decObj != nil && fhc.decoder != nil && string(resp.Header.ContentType()) == fhc.decodeType.String() {
 		err = fhc.decoder.Decode(fhc.decObj, resp.Body())
+		if err != nil {
+			fhc.logger.Debug().
+				Int("status", response.Status()).
+				String("content-type", string(resp.Header.ContentType())).
+				Log("can't decode response")
+		}
 	}
 	return
 }
