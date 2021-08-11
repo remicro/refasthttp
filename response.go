@@ -7,7 +7,7 @@ import (
 
 type responseImpl struct {
 	response      *fasthttp.Response
-	aquiredError  error
+	acquiredError error
 	decodedObject interface{}
 }
 
@@ -36,5 +36,5 @@ func (res *responseImpl) Header(key string) (values []string) {
 }
 
 func (res *responseImpl) Error() (err error) {
-	return res.aquiredError
+	return res.acquiredError
 }
