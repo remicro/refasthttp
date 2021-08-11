@@ -1,6 +1,7 @@
 package refasthttp
 
 import (
+	"github.com/remicro/api/cloud/balancer"
 	"github.com/remicro/api/logging"
 	"github.com/remicro/api/net/rehttp"
 	"github.com/remicro/api/serialization"
@@ -27,6 +28,21 @@ type fastHttpClient struct {
 	encObj     interface{}
 	decObj     interface{}
 	uri        *fasthttp.URI
+	bln balancer.Balancer
+}
+
+func (fhc *fastHttpClient) Balancer(bln balancer.Balancer) rehttp.Builder {
+	fhc.bln = bln
+	return fhc
+}
+
+func (fhc *fastHttpClient) Service(name string) rehttp.Builder {
+	node, err := fhc.bln.Find(name)
+	if err != nil {
+		return fhc
+	}
+	fhc.uri.Parse(nil, []byte(node.Address()))
+	return fhc
 }
 
 func (fhc *fastHttpClient) Logger(logger logging.Logger) rehttp.Builder {

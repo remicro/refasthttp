@@ -12,4 +12,3 @@
 *.out
 refasthttp.iml
 .idea/*
-go.sum
